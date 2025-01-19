@@ -1,10 +1,13 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken'
+import { ApiError } from '../utils/ApiError.js';
 const User_Schema=  new mongoose.Schema({
-    // id:{
-    //     type:String,
-    //     required:true
+    id:{
+        type:String,
+        required:true
 
-    // },
+    },
     watchHistory:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"videos"
@@ -56,34 +59,51 @@ const User_Schema=  new mongoose.Schema({
 
 }, {timestamps:true});
 User_Schema.pre("save", async function (next){
-    if(!this.isModified("passwords")) return next();
-    this.passwords=bcrypt.hash(this.passwords,10);
+    if(!this.isModified("password")) return next();
+    this.password=bcrypt.hash(this.password,10);
     next();
 
 })
-User_Schema.methods.isPasswordCorrect= async function (passwords){
-     return await bcrypt.compare(passwords,this.passwords )
+User_Schema.methods.isPasswordCorrect= async function (password){
+     return await bcrypt.compare(password,this.password )
 }
-User_Schema.methods.generateAccessToken= function(){
-   return jwt.sign(
-        {
-            _id:this.id,
-            email:this.email,
-            username:this.username,
-            fullName:this.fullName
-        },
-        process.env.ACCESS_TOKEN_SECRET,
-        {
-            expiresIn: process.env.ACESS_TOKEN_EXPIRY
-        }
 
-    )
+
+User_Schema.methods.generateAccessToken= async function(){
     
+   try {
+    const accessToken= await jwt.sign(
+         {
+            
+            
+            _id:this._id,
+             email:this.email,
+             username:this.username,
+            fullName:this.fullname
+         },
+         process.env.ACCESS_TOKEN_SECRET,
+         {
+             expiresIn: process.env.ACCESS_TOKEN_EXPIRY
+         }
+ 
+     )
+     
+    // console.log(accessToken);
+     return accessToken;
+     
+     
+ }
+    catch (error) {
+        console.error("new error", error);
+        throw new ApiError(500, " Trouble generating Access Token ")
+        
+    
+   }
 }
 User_Schema.methods.generateRefreshToken= function(){
     return jwt.sign(
         {
-            _id:this.id
+            _id:this._id
             
         },
         process.env.REFRESH_TOKEN_SECRET,
