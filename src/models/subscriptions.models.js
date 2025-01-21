@@ -12,14 +12,8 @@ const subscription_Schema= new mongoose.Schema({
     channel:{
         type:mongoose.Schema.Types.ObjectId,
         ref:users
-    },
-    createdAt:{
-        type:Date
-    },
-    updatedAt:{
-        type:Date
-
     }
+    
 
 
 

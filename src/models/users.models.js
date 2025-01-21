@@ -3,11 +3,11 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken'
 import { ApiError } from '../utils/ApiError.js';
 const User_Schema=  new mongoose.Schema({
-    id:{
-        type:String,
-        required:true
+    // id:{
+    //     type:String,
+    //     required:true
 
-    },
+    // },
     watchHistory:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"videos"
@@ -60,7 +60,9 @@ const User_Schema=  new mongoose.Schema({
 }, {timestamps:true});
 User_Schema.pre("save", async function (next){
     if(!this.isModified("password")) return next();
-    this.password=bcrypt.hash(this.password,10);
+    this.password=await bcrypt.hash(this.password,10);
+    console.log("hashed password",this.password);
+    
     next();
 
 })
