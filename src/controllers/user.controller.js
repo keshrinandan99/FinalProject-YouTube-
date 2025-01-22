@@ -10,6 +10,7 @@ import { verifyJWT } from "../middlewares/auth.middlewares.js";
 import mongoose  from "mongoose";
 import cookieParser from "cookie-parser";
 import jwt from 'jsonwebtoken'
+import multer  from "multer";
 
 
 const generateAccessTokenAndRefreshToken = async(userID)=>{
@@ -118,6 +119,8 @@ const coverImage= await uploadOnCloudinary(coverImagePath);
 
 const loginUser=asyncHandler(async(req,res)=>{
     const {email,username,password}=req.body;
+    console.log(email ,username, password);
+    
     if(!(username || email))
     {
         throw new ApiError(400,"username or email is required");
@@ -285,6 +288,7 @@ const updateAccountDetails=asyncHandler(async(req,res)=>{
 })
 const updateAvatar= asyncHandler(async(req,res)=>{
     const avatarLocalPath= req.file?.path
+    console.log("hola!");
     if(!avatarLocalPath)
     {
         throw new ApiError(400, "Avatar file is required")
@@ -303,12 +307,27 @@ const updateAvatar= asyncHandler(async(req,res)=>{
             new:true
         }
     ).select("-password")
+   console.log("before removing ", avatar.url);
+   
+    
+    const newCloudinary=await users.findByIdAndUpdate(req.user?._id, 
+        {
+            $unset:{avatar:1}
+        },
+        {
+            new:true    
+        }
+    )
+    console.log("after removing : ",newCloudinary);
+    
     return res.status(200).json(200, new ApiResponse(200, "Avatar updated successfully"))
 
 })
 
 const updateCoverImage=asyncHandler(async(req,res)=>{
     const coverImageLocalPath= req.file?.path;
+    console.log(coverImageLocalPath);
+    
     if(!coverImageLocalPath)
     {
         throw new ApiError(400, "Cover Image is required ")
@@ -332,6 +351,81 @@ const updateCoverImage=asyncHandler(async(req,res)=>{
         .json(new ApiResponse(200, " Cover image updated successfully "))
     )
 })
+const getUserChannelProfile=asyncHandler(async(req,res)=>{
+    const {username}=req.params
+    if(!username?.trim()){
+        throw new ApiError(400,"user doesnt exist")
+    }
+    const channel =await users.aggregate([
+
+        {
+                $match :{
+                username:username?.toLowerCase()
+                },
+
+        },
+            
+        {
+                $lookup:{
+                    localField:"_id",
+                    from:"subscription",
+                    foreignField:"channel",
+                    as:"subscribers"
+                }
+    },
+    {
+        $lookup:{
+            localField:"_id",
+            from:"subscription",
+            foreignField:"subscriber",
+            as:"subscribedTo "
+        }
+
+    },
+    {
+        $addFields : {
+            subscribersCount:{
+                $size:"$subscribers"
+            },
+            channelsSubscribedToCount:{
+                $size:"$subscribedTo"
+            },
+            isSubscribed:{
+                $cond:{
+                    if:{$in :[req.user?._id, "$subscibers.subscriber"]},
+                    then:true,
+                    else:false
+                }
+            }
+        }
+    },
+    {
+        $project : {
+            fullname:1,
+            username:1,
+            subscribersCount:1,
+            channelsSubscribedToCount:1,
+            isSubscribed:1,
+            avatar:1,
+            coverImage:1,
+            email:1
+        }
+    }
+    ])
+
+    if(!channel?.length())
+    {
+        throw new ApiError(500,"Channel doesnt exist ")
+    }
+
+    return res.status(200)
+    .json(new ApiResponse(
+        200, 
+        channel[0],
+        "User channel fetched successfull"
+))
+
+})
 
 
 export {registerUser,
@@ -340,5 +434,6 @@ export {registerUser,
        refreshToken,
         changePassword,
         currentUser,
+        updateAvatar,
          updateAccountDetails,
            updateCoverImage};
