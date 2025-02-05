@@ -1,5 +1,5 @@
 import mongoose , {Schema} from 'mongoose'
-import { users, Users } from './users.models'
+import { users } from './users.models.js';
 const videos_Schema= new Schema({
     id:{
         type:mongoose.Schema.Types.ObjectId,
@@ -46,4 +46,4 @@ const videos_Schema= new Schema({
 
  
 
-const videos=mongoose.mondel("videos", videos_Schema);
+export const videos=mongoose.model("videos", videos_Schema);

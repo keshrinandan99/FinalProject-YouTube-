@@ -2,12 +2,10 @@ import { asyncHandler } from "../utils/AsyncHandler.js";
 import { users }from '../models/users.models.js'
 import { ApiError } from "../utils/ApiError.js";
 import jwt, { decode } from 'jsonwebtoken'
-import mongoose from 'mongoose';
 
-
-   export const verifyJWT= asyncHandler(async(req, _,next)=>{
+    export const verifyJWT= asyncHandler(async(req, _,next)=>{
     try{   
-    const token = req.cookies?.accessToken || req.headers("Authorization")?.replace("Bearer", "")
+    const token = req.cookies?.accessToken || req.headers["Authorization"]?.replace("Bearer", "")
     
     
         if(!token)

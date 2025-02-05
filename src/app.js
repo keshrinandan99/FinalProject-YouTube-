@@ -12,7 +12,9 @@ app.use(express.urlencoded({ extended:true ,limit:"16 KB"}))
 app.use(express.static("public"))
 app.use(cookieParser())
 
-import userRouter from './routes/user.routes.js'
+import userRouter from './routes/user.routes.js';
+import videoRouter from './routes/video.routes.js';
 app.use ("/api/v1/user", userRouter)
+app.use("/api/v1/video",videoRouter);
 
 export {app}
